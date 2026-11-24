@@ -171,7 +171,7 @@ class Review2Fixes(unittest.TestCase):
     def test_out_path_tricks(self):
         tricky = [str(ROOT / "tests" / ".." / "tmp_dotdot")]
         if os.name == "nt":
-            tricky.append(str(ROOT).swapcase() + "\tmp_case")
+            tricky.append(str(ROOT).swapcase() + "\\tmp_case")
         for out in tricky:
             with self.subTest(out=out), redirect_stderr(io.StringIO()):
                 rc = main(["--root", str(ROOT), "build", "explainer", "--out", out])
