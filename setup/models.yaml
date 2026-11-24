@@ -107,6 +107,27 @@ models:
     size: 18196288
     sha256: 81beddc3e50e045bae4316b7188124a1b73bbd56b6659b971567a7800b2cb04b
     license: check the LoRA author's page
+  # ---- Optional QA face models (OpenCV Zoo on Hugging Face). Manual download only. ----
+  # URL, size and SHA-256 were read from the Hugging Face model API (LFS metadata),
+  # not by downloading the files. Verify after your own download with --verify.
+  - name: face_detection_yunet_2023mar.onnx
+    recipe: qa
+    dest: qa_face
+    manual: true
+    url: https://huggingface.co/opencv/face_detection_yunet/resolve/3cc26e7f1014a5ee5d74a42acee58bafc9d0a310/face_detection_yunet_2023mar.onnx
+    size: 232589
+    sha256: 8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4
+    license: MIT
+    note: YuNet face detector. Training-data licence not checked.
+  - name: face_recognition_sface_2021dec.onnx
+    recipe: qa
+    dest: qa_face
+    manual: true
+    url: https://huggingface.co/opencv/face_recognition_sface/resolve/3d7082438a6e4551e840c9b2bb60b71e8da4b524/face_recognition_sface_2021dec.onnx
+    size: 38696353
+    sha256: 0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79
+    license: Apache-2.0
+    note: SFace recogniser, 128-d. Training-data licence not checked.
 # Gated or region-restricted items that this kit never downloads for you.
 manual_steps:
   - name: FLUX.3 Klein (black-forest-labs/flux-3-image-klein, ...-comfy)

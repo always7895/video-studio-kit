@@ -80,10 +80,63 @@ def load_qa(*, root: str | Path | None = None) -> dict[str, Any]:
     return _yaml("config/qa.yaml", _root(root))
 
 
+def _env_path(var: str) -> Path | None:
+    value = os.environ.get(var)
+    return Path(value).expanduser() if value else None
+
+
+def _overlay_yaml(path: Path) -> dict[str, Any]:
+    """Load an out-of-repository YAML file (VSK_LOCAL_CONFIG / VSK_PROJECTS_DIR).
+
+    The path is chosen by the operator, so it may live anywhere, but each literal
+    component is still refused when it is a symlink or junction.
+    """
+    current = Path(path.anchor)
+    for part in path.parts[1:] if path.anchor else path.parts:
+        current = current / part
+        if current.is_symlink() or (hasattr(current, "is_junction") and current.is_junction()):
+            raise ConfigError("Linked overlay path forbidden")
+    if not path.is_file():
+        raise ConfigError(f"Missing overlay file: {path.name}")
+    try:
+        doc = yaml.safe_load(path.read_text(encoding="utf-8-sig"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise ConfigError(f"Could not load YAML: {path.name}") from exc
+    if not isinstance(doc, dict):
+        raise ConfigError(f"YAML document must be a mapping: {path.name}")
+    if type(doc.get("schema_version")) is not int or doc["schema_version"] != 1:
+        raise ConfigError(f"Unsupported schema_version in {path.name}")
+    return doc
+
+
+def projects_dir_override() -> Path | None:
+    """VSK_PROJECTS_DIR, when set, wins over the repository templates."""
+    return _env_path("VSK_PROJECTS_DIR")
+
+
+def local_config_override() -> Path | None:
+    """VSK_LOCAL_CONFIG, when set, wins over config/local.yaml."""
+    return _env_path("VSK_LOCAL_CONFIG")
+
+
+def project_source(name: str, *, root: str | Path | None = None) -> str:
+    """'overlay' when a file in VSK_PROJECTS_DIR supplies the project, else 'repo'."""
+    override = projects_dir_override()
+    if override is not None and _NAME.fullmatch(name) and (override / f"{name}.yaml").is_file():
+        return "overlay"
+    return "repo"
+
+
 def load_project(name: str, *, root: str | Path | None = None) -> dict[str, Any]:
-    """Project roots are symbolic; their actual values belong in ignored local.yaml."""
+    """Project roots are symbolic; their actual values belong in the local config.
+
+    Precedence: a file in VSK_PROJECTS_DIR, then config/projects in the repository.
+    """
     name = _name(name)
-    doc = _yaml(f"config/projects/{name}.yaml", _root(root))
+    if project_source(name, root=root) == "overlay":
+        doc = _overlay_yaml(projects_dir_override() / f"{name}.yaml")
+    else:
+        doc = _yaml(f"config/projects/{name}.yaml", _root(root))
     if doc.get("id") != name or not isinstance(doc.get("root_key"), str):
         raise ConfigError(f"Invalid project id/root_key: {name}")
     if not isinstance(doc.get("paths"), dict) or not isinstance(doc.get("qa"), dict):
@@ -92,7 +145,11 @@ def load_project(name: str, *, root: str | Path | None = None) -> dict[str, Any]
 
 
 def load_local(*, root: str | Path | None = None) -> dict[str, Any]:
-    """Only reads local.yaml. Never creates it or falls back to example credentials."""
+    """Reads VSK_LOCAL_CONFIG, else config/local.yaml. Never creates a file or falls
+    back to example values. A set-but-missing VSK_LOCAL_CONFIG is an error, not a silent skip."""
+    override = local_config_override()
+    if override is not None:
+        return _overlay_yaml(override)
     base = _root(root)
     if not (base / "config/local.yaml").is_file():
         return {}
@@ -217,8 +274,14 @@ def list_recipes(*, root: str | Path | None = None) -> tuple[str, ...]:
 
 
 def list_projects(*, root: str | Path | None = None) -> tuple[str, ...]:
-    path = _root(root) / "config/projects"
-    return tuple(sorted(p.stem for p in path.glob("*.yaml") if _NAME.fullmatch(p.stem)))
+    names = {p.stem for p in (_root(root) / "config/projects").glob("*.yaml")
+             if _NAME.fullmatch(p.stem)}
+    override = projects_dir_override()
+    if override is not None:
+        if not override.is_dir():
+            raise ConfigError("VSK_PROJECTS_DIR is not a directory")
+        names |= {p.stem for p in override.glob("*.yaml") if _NAME.fullmatch(p.stem)}
+    return tuple(sorted(names))
 
 
 def resolve_path(key: str, *, root: str | Path | None = None,
@@ -275,8 +338,20 @@ def doctor(*, root: str | Path | None = None) -> dict[str, Any]:
     load_registry("models", root=base)
     load_registry("workflows", root=base)
     load_qa(root=base)
+    local_override = local_config_override()
+    if local_override is not None:
+        load_local(root=base)  # validates the overlay file
+        local_source = {"source": "env VSK_LOCAL_CONFIG", "path": str(local_override)}
+    else:
+        present = (base / "config/local.yaml").is_file()
+        local_source = {"source": "repo config/local.yaml" if present else "none"}
+    override = projects_dir_override()
     return {"recipes": list(recipes), "projects": list(projects),
-            "local_present": (base / "config/local.yaml").is_file(),
+            "project_sources": {p: project_source(p, root=base) for p in projects},
+            "projects_dir": ({"source": "env VSK_PROJECTS_DIR", "path": str(override)}
+                             if override is not None else {"source": "repo config/projects"}),
+            "local_config": local_source,
+            "local_present": local_source["source"] != "none",
             "graph_sources_pinned": True, "network_calls": 0}
 
 

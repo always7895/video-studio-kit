@@ -18,8 +18,8 @@ class PureNumpyQa(unittest.TestCase):
         a, b = np.array([1.0, 0.0]), np.array([0.0, 1.0])
         self.assertAlmostEqual(cosine(a, a), 1.0)
         self.assertAlmostEqual(cosine(a, b), 0.0)
-        self.assertFalse(score_identity([a], a)["flag_for_review"])
-        out = score_frames([a], {0: a, 5: b})
+        self.assertFalse(score_identity([a], a, 0.5)["flag_for_review"])
+        out = score_frames([a], {0: a, 5: b}, 0.5)
         self.assertEqual(out["low_frames"], [5])
         self.assertEqual(out["disposition"], "HOLD")
         with self.assertRaises(ValueError):
@@ -70,3 +70,32 @@ class OpenCvQa(unittest.TestCase):
 
         self.assertLess(background_flow(base, base), 0.05)
         self.assertGreater(background_flow(base, shifted), 0.5)
+
+
+class ThresholdFailClosed(unittest.TestCase):
+    def setUp(self):
+        if np is None:
+            self.skipTest("numpy not installed")
+
+    def test_missing_threshold_refuses(self):
+        from vsk.qa.identity import (ThresholdNotConfigured, score_frames,
+                                     score_identity, threshold_from_project)
+
+        a = np.array([1.0, 0.0])
+        with self.assertRaises(ThresholdNotConfigured):
+            score_identity([a], a)
+        with self.assertRaises(ThresholdNotConfigured):
+            score_frames([a], {0: a}, None)
+        with self.assertRaises(ThresholdNotConfigured):
+            threshold_from_project({"qa": {"face_cosine_min": None}})
+        with self.assertRaises(ThresholdNotConfigured):
+            score_identity([a], a, True)
+        self.assertEqual(threshold_from_project({"qa": {"face_cosine_min_oblique": 0.5}},
+                                                oblique=True), 0.5)
+
+    def test_backend_registry(self):
+        from vsk.qa.identity import BACKENDS, make_backend
+
+        self.assertEqual(set(BACKENDS), {"insightface", "yunet_sface"})
+        with self.assertRaises(ValueError):
+            make_backend("nope")

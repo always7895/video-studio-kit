@@ -9,7 +9,10 @@ paths:
   output: "<relative-output-directory>"
 qa:
   profile: standard
-  face_cosine_min: 0.65
+  face_backend: insightface
+  # No built-in threshold: calibrate with `vsk qa calibrate-face`, then set both values.
+  face_cosine_min: null
+  face_cosine_min_oblique: null
   disposition: HOLD
 steps:
   - name: hero_still

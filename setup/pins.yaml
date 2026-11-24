@@ -5,9 +5,6 @@ comfyui:
   tag: v0.46.0
   commit: a277b5bf213e8a44fa34817b7770b54f86ef4cea
 custom_nodes:
-  - name: ComfyUI-Manager
-    url: https://github.com/Comfy-Org/ComfyUI-Manager.git
-    commit: 4c50a2bc8b9e684d8a85930567957470b952bebe
   - name: ComfyUI-Inpaint-CropAndStitch
     url: https://github.com/lquesada/ComfyUI-Inpaint-CropAndStitch.git
     commit: 6005efc02f7745649118edd89cdd084c2b9bd3ae

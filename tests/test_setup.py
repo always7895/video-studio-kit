@@ -41,3 +41,11 @@ class SetupTests(unittest.TestCase):
                          Path("m") / "vae" / "a.safetensors")
         with self.assertRaises(ValueError):
             dm.target_path(Path("m"), {"name": "../evil", "dest": "vae"})
+
+    def test_manager_not_required_and_face_models_recorded(self):
+        pins = yaml.safe_load((ROOT / "setup/pins.yaml").read_text(encoding="utf-8"))
+        self.assertNotIn("ComfyUI-Manager", [n["name"] for n in pins["custom_nodes"]])
+        models = {m["name"]: m for m in yaml.safe_load(
+            (ROOT / "setup/models.yaml").read_text(encoding="utf-8"))["models"]}
+        for name in ("face_detection_yunet_2023mar.onnx", "face_recognition_sface_2021dec.onnx"):
+            self.assertTrue(models[name]["manual"])

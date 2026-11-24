@@ -10,11 +10,10 @@ You are responsible for reading and accepting the terms before you download or u
 | Component | Licence | Source |
 |---|---|---|
 | ComfyUI v0.46.0 | GPL-3.0 | https://github.com/Comfy-Org/ComfyUI |
-| ComfyUI-Manager | GPL-3.0 | https://github.com/Comfy-Org/ComfyUI-Manager |
 | ComfyUI-Inpaint-CropAndStitch | GPL-3.0 | https://github.com/lquesada/ComfyUI-Inpaint-CropAndStitch |
 | ComfyUI Nvidia VFX nodes (Nvidia_RTX_Nodes_ComfyUI) | Apache-2.0 | https://github.com/Comfy-Org/ComfyUI_Nvidia_VFX_Nodes |
 
-These are cloned, not redistributed. Verify each licence in the cloned tree.
+These are cloned, not redistributed. Verify each licence in the cloned tree. ComfyUI-Manager is deliberately not installed (it self-updates at run time, which conflicts with pinning); install it by hand if you want it.
 
 ## Python dependencies
 
@@ -22,7 +21,7 @@ These are cloned, not redistributed. Verify each licence in the cloned tree.
 |---|---|
 | PyYAML | MIT |
 | numpy (qa extra) | BSD-3-Clause |
-| opencv-python (qa extra) | Apache-2.0 (OpenCV), MIT (wrapper) |
+| opencv-python-headless (qa extra) | Apache-2.0 (OpenCV), MIT (wrapper) |
 | insightface (qa extra) | MIT for the code; the pretrained `buffalo_l` / ArcFace model packs are for non-commercial research use only, per the InsightFace project |
 | pytest (test extra) | MIT |
 
@@ -34,6 +33,8 @@ These are cloned, not redistributed. Verify each licence in the cloned tree.
 | `p-h3-image_*` (PrunaAI/P-Image-OSS-Comfy) | MiniMax H3 Community License Agreement | Same regional terms as above. |
 | `moss_image_sft_bf16`, `qwen3.5_9b_bf16`, `flux2-vae_small` (Comfy-Org/MOSS-Image) | Apache-2.0 | Per the repository metadata at the pinned commit. |
 | `moss_community/*` LoRAs | Set by each LoRA author | Manual download; check the author's page. |
+| `face_detection_yunet_2023mar.onnx` (opencv/face_detection_yunet) | MIT | Optional QA detector, manual download. Training-data licence not checked. |
+| `face_recognition_sface_2021dec.onnx` (opencv/face_recognition_sface) | Apache-2.0 | Optional QA recogniser, manual download. Training-data licence not checked. |
 
 ## Licences you may meet when extending the kit
 

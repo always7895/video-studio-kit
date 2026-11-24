@@ -5,7 +5,8 @@ default_disposition: HOLD
 profiles:
   standard:
     face:
-      arcface_frontal_cosine_min: 0.65
+      # null = not configured; face QA refuses to run until a project sets a calibrated value.
+      cosine_min: null
     flow:
       background_mean_px_max: 1.5
     dup:

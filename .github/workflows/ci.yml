@@ -13,12 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
+        python: ["3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - name: Install core only
         run: |
           python -m pip install --upgrade pip
@@ -36,14 +37,32 @@ jobs:
           python -m pip install numpy opencv-python-headless
           python -m pytest -q tests/test_qa.py
 
+  latest-combo:
+    # Report only: newest numpy 2.x, opencv 5.x and insightface. Never blocks the pipeline.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install newest QA stack
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+          python -m pip install --upgrade numpy opencv-python-headless insightface
+          python -m pip list
+      - name: Tests
+        run: python -m pytest -q
+
   comfyui-smoke:
     needs: cpu-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12"
+          python-version: "3.12"  # one cell only; installs just .[test] to keep the run short
       - name: Install kit
         run: |
           python -m pip install --upgrade pip

@@ -9,7 +9,9 @@ paths:
   output: "<relative-output-directory>"
 qa:
   profile: standard
+  face_backend: insightface
   face_cosine_min: null
+  face_cosine_min_oblique: null
   disposition: HOLD
 steps:
   - name: establishing

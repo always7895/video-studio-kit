@@ -11,7 +11,7 @@ setup offline, and ships advisory QA helpers. It never approves anything: every 
   ComfyUI client (standard library only). Graphs are built, never submitted, by the kit.
 - `config/recipes`: three example recipes (P-H3 still, MOSS still, Pika H3 Ref2VA video). Each
   binds named parameters to nodes of a pinned workflow JSON in `workflows/api`.
-- `vsk.qa`: ArcFace identity screening, background optical flow, cut/freeze/jump checks, half-frame-rate detection.
+- `vsk.qa`: pluggable face identity screening (insightface or YuNet+SFace, thresholds always from your config), background optical flow, cut/freeze/jump checks, half-frame-rate detection.
 - `vsk.post.master`: two-pass EBU R128 loudness mastering through ffmpeg.
 - `setup/`: pinned ComfyUI and public-node installer, model manifest with sizes, SHA-256 and licences, downloader.
 
@@ -34,12 +34,12 @@ git clone <this repository> video-studio-kit
 cd video-studio-kit
 python -m venv .venv
 . .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install -e ".[qa]"          # core needs only PyYAML; [qa] adds numpy, opencv, insightface
+pip install -e ".[qa]"          # Python >= 3.12. Core needs only PyYAML; [qa] adds numpy, opencv-headless, insightface
 pip install -e ".[test]"        # pytest
 ```
 
 `insightface` may need a C++ toolchain on Windows. If its wheel fails, install the core
-(`pip install -e .`) and add `numpy opencv-python` by hand; only `ArcFaceEngine` needs insightface.
+(`pip install -e .`) and add `numpy opencv-python-headless` by hand; only `ArcFaceEngine` needs insightface.
 
 Install ComfyUI and the public nodes at the pinned commits, then its own dependencies in your venv
 (use the torch build that matches your GPU):
@@ -91,6 +91,50 @@ first, hold your own GPU lease, and review the result.
 To use your own workflow: export the API-format JSON into `workflows/api`, add a recipe YAML
 that maps parameter names to `{node, input}` pairs, and pin the file's SHA-256. A modified graph with a
 stale pin is refused.
+
+
+## Overrides outside the repository
+
+Keep machine paths and your own project files out of version control. Precedence is
+command line, then environment, then the templates in this repository:
+
+| Setting | CLI | Environment | Fallback |
+|---|---|---|---|
+| local config file | `--local-config` | `VSK_LOCAL_CONFIG` | `config/local.yaml` |
+| project YAML directory | `--projects-dir` | `VSK_PROJECTS_DIR` | `config/projects` |
+
+A project file with the same name in the override directory replaces the template. `vsk doctor`
+prints which source each project and the local config come from. That output contains
+local paths: do not paste it into public issues. `vsk build <project> --out DIR` refuses a
+`DIR` inside the repository.
+
+## Face QA backends and thresholds
+
+Set `qa.face_backend` to `insightface` (default; the `buffalo_l` weights are for non-commercial
+research use only) or `yunet_sface` (OpenCV Zoo ONNX files, manual download listed in
+`setup/models.yaml`; training-data licence not checked). There is no built-in threshold:
+`qa.face_cosine_min` (and optional `qa.face_cosine_min_oblique`) default to `null`, and scoring
+refuses to run until you set them. Calibrate with your own labelled images:
+
+```bash
+vsk qa calibrate-face --backend yunet_sface --faces ./my_faces   # one sub-folder per person
+```
+
+It needs at least 50 positive and 300 negative pairs, reports Wilson 95% intervals, and
+picks the lowest threshold with a false-positive rate of 1% or less. The result is advisory
+(HOLD). Tests cover the interface and the threshold logic on synthetic data only.
+
+## Components and update dates
+
+| Component | Version or pin | Checked | Source |
+|---|---|---|---|
+| ComfyUI | v0.46.0 | 2026-11-24 | https://github.com/Comfy-Org/ComfyUI/releases |
+| ComfyUI-Inpaint-CropAndStitch | 6005efc0 | 2026-11-24 | https://github.com/lquesada/ComfyUI-Inpaint-CropAndStitch |
+| Nvidia VFX nodes | 38d790de | 2026-11-24 | https://github.com/Comfy-Org/ComfyUI_Nvidia_VFX_Nodes |
+| ComfyUI-Manager | optional, not installed by the kit | 2026-11-24 | https://github.com/Comfy-Org/ComfyUI-Manager |
+| actions/checkout | v7.0.1 (pinned by SHA) | 2026-11-25 | https://github.com/actions/checkout |
+| actions/setup-python | v7.1.0 (pinned by SHA) | 2026-11-25 | https://github.com/actions/setup-python |
+| YuNet / SFace ONNX | 2023mar / 2021dec | 2026-11-25 | https://huggingface.co/opencv |
 
 ## HOLD and human sign-off
 
