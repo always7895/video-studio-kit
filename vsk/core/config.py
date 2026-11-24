@@ -122,6 +122,9 @@ def local_config_override() -> Path | None:
 def project_source(name: str, *, root: str | Path | None = None) -> str:
     """'overlay' when a file in VSK_PROJECTS_DIR supplies the project, else 'repo'."""
     override = projects_dir_override()
+    if override is not None and not override.is_dir():
+        # Fail closed: a typo must not silently fall back to the repository templates.
+        raise ConfigError("VSK_PROJECTS_DIR is not a directory")
     if override is not None and _NAME.fullmatch(name) and (override / f"{name}.yaml").is_file():
         return "overlay"
     return "repo"
@@ -341,14 +344,14 @@ def doctor(*, root: str | Path | None = None) -> dict[str, Any]:
     local_override = local_config_override()
     if local_override is not None:
         load_local(root=base)  # validates the overlay file
-        local_source = {"source": "env VSK_LOCAL_CONFIG", "path": str(local_override)}
+        local_source = {"source": "override (--local-config or VSK_LOCAL_CONFIG)", "path": str(local_override)}
     else:
         present = (base / "config/local.yaml").is_file()
         local_source = {"source": "repo config/local.yaml" if present else "none"}
     override = projects_dir_override()
     return {"recipes": list(recipes), "projects": list(projects),
             "project_sources": {p: project_source(p, root=base) for p in projects},
-            "projects_dir": ({"source": "env VSK_PROJECTS_DIR", "path": str(override)}
+            "projects_dir": ({"source": "override (--projects-dir or VSK_PROJECTS_DIR)", "path": str(override)}
                              if override is not None else {"source": "repo config/projects"}),
             "local_config": local_source,
             "local_present": local_source["source"] != "none",

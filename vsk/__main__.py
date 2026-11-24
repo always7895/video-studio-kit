@@ -15,7 +15,7 @@ import os
 import sys
 from pathlib import Path
 
-from .core import ConfigError, build_project, doctor, list_projects
+from .core import ConfigError, build_project, doctor, list_projects, load_project
 from .core.config import _root
 
 
@@ -34,19 +34,28 @@ def _calibrate(args) -> int:
 
     if bool(args.scores) == bool(args.faces):
         raise ConfigError("give exactly one of --scores (JSON) or --faces (folder of person folders)")
-    if args.scores:
-        data = json.loads(Path(args.scores).read_text(encoding="utf-8"))
-        pos, neg = data["positive"], data["negative"]
-    else:
-        from .qa.identity import make_backend
-
-        pos, neg = scores_from_embeddings(
-            embeddings_from_faces_dir(make_backend(args.backend), args.faces))
     try:
+        if args.scores:
+            data = json.loads(Path(args.scores).read_text(encoding="utf-8"))
+            pos, neg = data["positive"], data["negative"]
+        else:
+            from .qa.identity import backend_from_project, make_backend
+
+            name = args.backend or (backend_from_project(load_project(args.project, root=args.root))
+                                    if args.project else "insightface")
+            by_person, skipped = embeddings_from_faces_dir(make_backend(name), args.faces)
+            if skipped:
+                print(f"skipped {skipped} image(s): unreadable, no face, or more than one face",
+                      file=sys.stderr)
+            pos, neg = scores_from_embeddings(by_person)
         result = recommend_threshold(pos, neg, max_fpr=args.max_fpr)
-    except InsufficientSamples as exc:
-        print(f"refused: {exc}", file=sys.stderr)
-        return 3
+    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ConfigError(f"invalid scores input: {exc!r}") from exc
+    except (ValueError, FileNotFoundError, OSError) as exc:
+        if isinstance(exc, InsufficientSamples):
+            print(f"refused: {exc}", file=sys.stderr)
+            return 3
+        raise ConfigError(str(exc)) from exc
     print(json.dumps(result, indent=2))
     return 0
 
@@ -70,15 +79,17 @@ def main(argv: list[str] | None = None) -> int:
     qsub = q.add_subparsers(dest="qa_cmd", required=True)
     c = qsub.add_parser("calibrate-face",
                         help="recommend a face threshold from your own positive and negative pairs")
-    c.add_argument("--backend", default="insightface", choices=["insightface", "yunet_sface"])
+    c.add_argument("--backend", default=None, choices=["insightface", "yunet_sface"],
+                   help="default: qa.face_backend of --project, else insightface")
+    c.add_argument("--project", default=None, help="project whose qa.face_backend selects the backend")
     c.add_argument("--faces", default=None, help="folder with one sub-folder of images per person")
     c.add_argument("--scores", default=None, help='JSON {"positive": [...], "negative": [...]}')
     c.add_argument("--max-fpr", type=float, default=0.01)
     args = ap.parse_args(argv)
     if args.local_config:
-        os.environ["VSK_LOCAL_CONFIG"] = str(Path(args.local_config).expanduser().resolve())
+        os.environ["VSK_LOCAL_CONFIG"] = str(Path(args.local_config).expanduser().absolute())
     if args.projects_dir:
-        os.environ["VSK_PROJECTS_DIR"] = str(Path(args.projects_dir).expanduser().resolve())
+        os.environ["VSK_PROJECTS_DIR"] = str(Path(args.projects_dir).expanduser().absolute())
     try:
         if args.cmd == "doctor":
             print(json.dumps(doctor(root=args.root), indent=2))

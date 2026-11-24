@@ -118,10 +118,11 @@ refuses to run until you set them. Calibrate with your own labelled images:
 
 ```bash
 vsk qa calibrate-face --backend yunet_sface --faces ./my_faces   # one sub-folder per person
+vsk qa calibrate-face --project ad --faces ./my_faces            # backend from qa.face_backend
 ```
 
 It needs at least 50 positive and 300 negative pairs, reports Wilson 95% intervals, and
-picks the lowest threshold with a false-positive rate of 1% or less. The result is advisory
+picks the lowest threshold (rounded up to 4 decimals) with a false-positive rate of 1% or less, and skips images with no face or more than one face. The intervals are optimistic because the point is chosen on the same pairs: validate on separate images. The result is advisory
 (HOLD). Tests cover the interface and the threshold logic on synthetic data only.
 
 ## Components and update dates

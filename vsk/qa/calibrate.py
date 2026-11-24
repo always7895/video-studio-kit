@@ -64,16 +64,25 @@ def recommend_threshold(positive: Sequence[float], negative: Sequence[float], *,
             chosen = t
             break
     assert chosen is not None  # the largest candidate always yields fp == 0
-    fp = sum(1 for x in neg if x >= chosen)
-    tp = sum(1 for x in pos if x >= chosen)
+    # Report a 4-decimal threshold rounded UP, then recompute every statistic from the
+    # reported value so that what the user copies is exactly what was measured.
+    reported = math.ceil(chosen * 1e4) / 1e4
+    fp = sum(1 for x in neg if x >= reported)
+    while fp / len(neg) > max_fpr:  # guards against floating-point rounding at the boundary
+        reported = round(reported + 1e-4, 4)
+        fp = sum(1 for x in neg if x >= reported)
+    tp = sum(1 for x in pos if x >= reported)
     return {
-        "threshold": round(chosen, 4),
+        "threshold": reported,
         "max_fpr": max_fpr,
         "positive_pairs": len(pos), "negative_pairs": len(neg),
         "fpr": fp / len(neg), "fpr_ci95": [round(v, 4) for v in wilson_interval(fp, len(neg))],
         "tpr": tp / len(pos), "tpr_ci95": [round(v, 4) for v in wilson_interval(tp, len(pos))],
         "disposition": "HOLD",
-        "note": "advisory only; a human reviewer decides whether to adopt this threshold",
+        "note": ("advisory only; a human reviewer decides whether to adopt this threshold. "
+                 "The point was chosen on the same pairs it is measured on, and pairs of the "
+                 "same people are not independent, so the intervals are optimistic: validate on a "
+                 "separate set of images."),
     }
 
 
@@ -95,14 +104,19 @@ def scores_from_embeddings(by_person: dict) -> tuple[list[float], list[float]]:
     return pos, neg
 
 
-def embeddings_from_faces_dir(backend, faces_dir) -> dict:
-    """Layout: ``faces_dir/<person>/<image>``. Uses the largest face per image."""
+def embeddings_from_faces_dir(backend, faces_dir) -> tuple[dict, int]:
+    """Layout: ``faces_dir/<person>/<image>``.
+
+    Images with no face or with more than one face are skipped (a second face could belong
+    to another person and would contaminate the pairs). Returns (embeddings, skipped_count).
+    """
     from pathlib import Path
 
     import cv2
     import numpy as np
 
     out: dict = {}
+    skipped = 0
     for person in sorted(p for p in Path(faces_dir).iterdir() if p.is_dir()):
         embs = []
         for img in sorted(person.iterdir()):
@@ -110,10 +124,13 @@ def embeddings_from_faces_dir(backend, faces_dir) -> dict:
                 continue
             frame = cv2.imdecode(np.fromfile(str(img), dtype=np.uint8), cv2.IMREAD_COLOR)
             if frame is None:
+                skipped += 1
                 continue
             found = backend.embeddings(frame)
-            if found:
+            if len(found) == 1:
                 embs.append(found[0])
+            else:
+                skipped += 1
         if len(embs) >= 2:
             out[person.name] = embs
-    return out
+    return out, skipped

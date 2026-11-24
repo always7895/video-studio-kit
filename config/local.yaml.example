@@ -4,6 +4,9 @@ schema_version: 1
 paths:
   comfyui_root: "<absolute-path-to-your-ComfyUI-checkout>"
   models_root: "<absolute-path-to-your-models-directory>"
+  # Optional face QA models (manual download, see setup/models.yaml):
+  yunet_onnx: "<absolute-path-to-face_detection_yunet_2023mar.onnx>"
+  sface_onnx: "<absolute-path-to-face_recognition_sface_2021dec.onnx>"
 projects:
   ad: "<absolute-project-root>"
   explainer: "<absolute-project-root>"

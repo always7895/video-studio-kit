@@ -40,6 +40,15 @@ def threshold_from_project(project: Mapping, *, oblique: bool = False) -> float:
     return require_threshold(qa.get(key))
 
 
+def backend_from_project(project: Mapping) -> str:
+    """Backend name from ``qa.face_backend`` (default ``insightface``); unknown names are refused."""
+    qa = project.get("qa") if isinstance(project, Mapping) else None
+    name = (qa or {}).get("face_backend", "insightface") if isinstance(qa, Mapping) else "insightface"
+    if name not in ("insightface", "yunet_sface"):
+        raise ValueError(f"Unknown face backend: {name}")
+    return name
+
+
 def cosine(a, b) -> float:
     import numpy as np
 

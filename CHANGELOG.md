@@ -3,6 +3,9 @@
 ## 0.2.0
 
 ### Breaking
+- `config/qa.yaml`: key `arcface_frontal_cosine_min` is now `cosine_min` (default null).
+- QA extra uses `opencv-python-headless` instead of `opencv-python`; an environment with both installed can have two conflicting `cv2` packages, so uninstall `opencv-python` first.
+- `vsk build --out` now refuses a directory inside the repository.
 - No built-in face threshold. The hard-coded 0.65 is removed from code, `config/qa.yaml`
   and the example projects. `score_identity` and `score_frames` need an explicit threshold
   and raise `ThresholdNotConfigured` otherwise. Set `qa.face_cosine_min` (and optionally
@@ -24,7 +27,7 @@
 - ComfyUI-Manager is no longer a required custom node (optional, install by hand).
 - CI: actions pinned by commit SHA (checkout v7.0.1, setup-python v7.1.0), Python 3.12 and 3.13 matrix,
   non-blocking job for newest numpy/opencv/insightface, comfyui-smoke stays on 3.12 (installs only `.[test]`).
-- QA extra uses `opencv-python-headless`.
+
 
 ### Notes
 - FLUX.3 Klein remains a candidate, not a recipe: it must first pass on an unpatched pinned ComfyUI.
