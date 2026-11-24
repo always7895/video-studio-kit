@@ -28,7 +28,10 @@ def wilson_interval(successes: int, total: int, z: float = Z95) -> tuple[float, 
     denom = 1 + z * z / total
     centre = (p + z * z / (2 * total)) / denom
     half = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denom
-    return max(0.0, centre - half), min(1.0, centre + half)
+    # The exact bounds at the extremes are 0 and 1; avoid floating-point residue.
+    lo = 0.0 if successes == 0 else max(0.0, centre - half)
+    hi = 1.0 if successes == total else min(1.0, centre + half)
+    return lo, hi
 
 
 def recommend_threshold(positive: Sequence[float], negative: Sequence[float], *,
