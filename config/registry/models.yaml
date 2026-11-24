@@ -1,0 +1,18 @@
+schema_version: 1
+# Filenames the bundled recipes expect under ComfyUI/models. Download metadata
+# (URL, size, sha256, licence) lives in setup/models.yaml.
+models:
+  pika_h3:
+    recipe: pika_h3
+    diffusion: minimax_h3_ref2va_pruned_int8_convrot.safetensors
+    text_encoder: qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
+    lora: pika_h3_flex_ref2va_v1_bf16.safetensors
+    license: minimax-h3-community
+  ph3:
+    recipe: ph3
+    diffusion: p-h3-image_int8_convrot.safetensors
+    license: minimax-h3-community
+  moss:
+    recipe: moss
+    diffusion: moss_image_sft_bf16.safetensors
+    license: apache-2.0

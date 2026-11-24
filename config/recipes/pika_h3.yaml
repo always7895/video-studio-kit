@@ -1,0 +1,47 @@
+schema_version: 1
+id: pika_h3
+kind: video
+description: "Pika H3 Flex Ref2VA, 6-NFE; example graph fixture"
+workflow:
+  path: workflows/api/pika_h3_ref2va.api.json
+  sha256: 98e5d71a4b7bd0d1c37c9ce05a987ab593cad056eae68623aee6bdccc4968eda
+parameters:
+  model: {node: '1', input: unet_name}
+  text_encoder: {node: '2', input: clip_name}
+  video_vae: {node: '3', input: vae_name}
+  audio_vae: {node: '4', input: vae_name}
+  lora: {node: '90', input: lora_name}
+  lora_strength: {node: '90', input: strength_model}
+  steps: {node: '91', input: sigmas, encoding: sigma_schedule}
+  sampler: {node: '10', input: sampler_name}
+  width: {node: '7', input: width}
+  height: {node: '7', input: height}
+  frames: {node: '7', input: length}
+  frames_kept: {node: '15', input: length}
+  output_width: {node: '17', input: width}
+  output_height: {node: '17', input: height}
+  seed: {node: '9', input: noise_seed}
+  fps: {node: '18', input: fps}
+  prompt: {node: '7', input: prompt}
+  source_image: {node: '20', input: image}
+  filename_prefix: {node: '18', input: filename_prefix}
+defaults:
+  model: minimax_h3_ref2va_pruned_int8_convrot.safetensors
+  text_encoder: qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors
+  video_vae: minimax_h3_video_vae_int8_convrot.safetensors
+  audio_vae: minimax_h3_audio_vae_fp32.safetensors
+  lora: pika_h3_flex_ref2va_v1_bf16.safetensors
+  lora_strength: 1.0
+  steps:
+    count: 6
+    sigmas: "1.0, 0.972973, 0.923077, 0.8, 0.571429, 0.333333, 0.0"
+  sampler: lcm
+  width: 768
+  height: 1344
+  frames: 124
+  frames_kept: 120
+  output_width: 1080
+  output_height: 1920
+  seed: 270027
+  fps: 24.0
+# Prompt/source/filename_prefix retain fixture defaults; override before real use.

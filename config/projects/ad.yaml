@@ -1,0 +1,27 @@
+schema_version: 1
+id: ad
+name: Example product-ad project
+root_key: ad
+# Project roots are defined only in the gitignored config/local.yaml (or env).
+paths:
+  character_masters: "<relative-characters-directory>"
+  reference_images: "<relative-reference-directory>"
+  output: "<relative-output-directory>"
+qa:
+  profile: standard
+  face_cosine_min: 0.65
+  disposition: HOLD
+steps:
+  - name: hero_still
+    recipe: ph3
+    overrides:
+      prompt: "Studio photograph of a generic product on a pale table, soft daylight"
+      seed: 101
+      filename_prefix: vsk/ad/hero_still
+  - name: hero_motion
+    recipe: pika_h3
+    overrides:
+      prompt: "Use <Picture 1> as the subject reference. The product stays still while soft light slowly moves across it."
+      source_image: "ad_hero_still.png"
+      seed: 102
+      filename_prefix: vsk/ad/hero_motion

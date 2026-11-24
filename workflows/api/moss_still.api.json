@@ -1,0 +1,133 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "moss_image_sft_bf16.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3.5_9b_bf16.safetensors",
+      "type": "moss_image",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae_small.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "moss_beauty_style, Photorealistic medium waist-up portrait of one 30-year-old Taiwanese woman with shoulder-length dark hair, wearing a plain ivory linen blouse, standing slightly right of center inside a Taiwanese apartment. Soft natural window daylight from the left, natural realistic skin with pores and fine facial texture, relaxed neutral expression, both hands visible and relaxed at waist level. Eye-level 50mm photograph, face and eyes sharply in focus. A continuous smooth warm-grey plaster wall behind her has a broad gentle light gradient; leave the upper quarter of the frame and upper-left background empty and smooth. Natural proportions, one coherent photograph, no text or logos.",
+      "clip": [
+        "2",
+        0
+      ]
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "checkerboard background, transparency grid, isolated cutout, floating platform, plate, saucer, dish, bowl, text, lettering, logo",
+      "clip": [
+        "2",
+        0
+      ]
+    }
+  },
+  "6": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+      "width": 1152,
+      "height": 2048,
+      "batch_size": 1
+    }
+  },
+  "7": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "40",
+        0
+      ],
+      "seed": 20261027,
+      "steps": 32,
+      "cfg": 3.0,
+      "sampler_name": "er_sde",
+      "scheduler": "simple",
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ],
+      "filename_prefix": "vsk/example/image"
+    }
+  },
+  "40": {
+    "class_type": "ModelAttentionBackend",
+    "inputs": {
+      "model": [
+        "101",
+        0
+      ],
+      "attention": "comfy kitchen attention"
+    }
+  },
+  "100": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "moss_community\\moss_image_sft_banding_fix_L37-41_bf16.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "101": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "100",
+        0
+      ],
+      "lora_name": "moss_community\\moss-sharp-v1_000000400.safetensors",
+      "strength_model": 0.5
+    }
+  }
+}

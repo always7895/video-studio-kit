@@ -1,0 +1,320 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    }
+  },
+  "90": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "pika_h3_flex_ref2va_v1_bf16.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "example_reference.png"
+    }
+  },
+  "7": {
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "prompt": "Use <Picture 1> only as the subject and scene reference. An anonymous glass jar rests solidly on a neutral stone plinth, its position and shape held stable; a subtle cinematic camera push-in, controlled shadows and reflections, 24fps, no text, no logos, no new objects, no cuts. Quiet studio ambience.",
+      "width": 768,
+      "height": 1344,
+      "length": 124,
+      "ref_image_size": "match",
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "20",
+        0
+      ]
+    }
+  },
+  "8": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "90",
+        0
+      ],
+      "conditioning": [
+        "7",
+        0
+      ]
+    }
+  },
+  "9": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 270027
+    }
+  },
+  "10": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "lcm"
+    }
+  },
+  "91": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.972973, 0.923077, 0.8, 0.571429, 0.333333, 0.0"
+    }
+  },
+  "12": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "9",
+        0
+      ],
+      "guider": [
+        "8",
+        0
+      ],
+      "sampler": [
+        "10",
+        0
+      ],
+      "sigmas": [
+        "91",
+        0
+      ],
+      "latent_image": [
+        "7",
+        1
+      ]
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+  "14": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    }
+  },
+  "15": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": [
+        "13",
+        0
+      ],
+      "batch_index": 0,
+      "length": 120
+    }
+  },
+  "16": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": [
+        "15",
+        0
+      ],
+      "x": 6,
+      "y": 0,
+      "width": 756,
+      "height": 1344
+    }
+  },
+  "60": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "relayvsr_x2_lightx2v_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "61": {
+    "class_type": "RelayVSRConditioning",
+    "inputs": {
+      "model": [
+        "60",
+        0
+      ],
+      "images": [
+        "16",
+        0
+      ]
+    }
+  },
+  "62": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "60",
+        0
+      ],
+      "conditioning": [
+        "61",
+        0
+      ]
+    }
+  },
+  "63": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 270027
+    }
+  },
+  "64": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "65": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.0"
+    }
+  },
+  "66": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "63",
+        0
+      ],
+      "guider": [
+        "62",
+        0
+      ],
+      "sampler": [
+        "64",
+        0
+      ],
+      "sigmas": [
+        "65",
+        0
+      ],
+      "latent_image": [
+        "61",
+        1
+      ]
+    }
+  },
+  "67": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "relayvsr_flash_vae_x2_fp32.safetensors"
+    }
+  },
+  "68": {
+    "class_type": "VSRDecode",
+    "inputs": {
+      "vae": [
+        "67",
+        0
+      ],
+      "samples": [
+        "66",
+        0
+      ],
+      "images": [
+        "16",
+        0
+      ],
+      "detail": 1.0
+    }
+  },
+  "17": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "68",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": 1080,
+      "height": 1920,
+      "crop": "center"
+    }
+  },
+  "21": {
+    "class_type": "TrimAudioDuration",
+    "inputs": {
+      "audio": [
+        "14",
+        0
+      ],
+      "start_index": 0.0,
+      "duration": 5.0
+    }
+  },
+  "18": {
+    "class_type": "SaveVideoNVENC",
+    "inputs": {
+      "images": [
+        "17",
+        0
+      ],
+      "audio": [
+        "21",
+        0
+      ],
+      "fps": 24.0,
+      "filename_prefix": "production_suite/19_pika_ref2va6",
+      "codec": "h264_nvenc",
+      "cq": 13,
+      "preset": "p7"
+    }
+  }
+}

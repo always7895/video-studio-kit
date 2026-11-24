@@ -1,0 +1,29 @@
+schema_version: 1
+id: documentary
+name: Example history-documentary project
+root_key: documentary
+# Project roots are defined only in the gitignored config/local.yaml (or env).
+paths:
+  character_masters: "<relative-characters-directory>"
+  reference_images: "<relative-reference-directory>"
+  output: "<relative-output-directory>"
+qa:
+  profile: standard
+  face_cosine_min: null
+  disposition: HOLD
+steps:
+  - name: establishing
+    recipe: moss
+    overrides:
+      prompt: "Anonymous stone harbor at dawn, weathered ships at anchor, reconstructed scene, no text"
+      width: 1344
+      height: 768
+      seed: 301
+      filename_prefix: vsk/documentary/establishing
+  - name: establishing_motion
+    recipe: pika_h3
+    overrides:
+      prompt: "Use <Picture 1> as the scene reference. Mist drifts slowly across the harbor water."
+      source_image: "documentary_establishing.png"
+      seed: 302
+      filename_prefix: vsk/documentary/establishing_motion

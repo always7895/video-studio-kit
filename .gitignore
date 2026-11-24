@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+config/local.yaml
+build/
+dist/
+/ComfyUI/
+/_models/

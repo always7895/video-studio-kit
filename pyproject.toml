@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-studio-kit"
+version = "0.1.0"
+description = "Config-driven local ComfyUI video production kit: recipes, graph builder, offline doctor, advisory QA"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+# The ComfyUI client uses only the standard library; the sole runtime dependency is PyYAML.
+dependencies = ["PyYAML>=6.0,<7"]
+
+[project.optional-dependencies]
+qa = ["numpy>=1.26", "opencv-python>=4.9", "insightface>=0.7.3"]
+test = ["pytest>=8"]
+
+[project.scripts]
+vsk = "vsk.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vsk*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

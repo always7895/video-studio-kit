@@ -1,0 +1,12 @@
+schema_version: 1
+# SHA256 protects each source graph. After editing a graph, update its recipe pin.
+workflows:
+  pika_h3:
+    path: workflows/api/pika_h3_ref2va.api.json
+    sha256: 98e5d71a4b7bd0d1c37c9ce05a987ab593cad056eae68623aee6bdccc4968eda
+  ph3:
+    path: workflows/api/ph3_still.api.json
+    sha256: a66ca7d93faae5ebf9165729db65a7371ea9600cd47a0a216b71f4cd5aef33b3
+  moss:
+    path: workflows/api/moss_still.api.json
+    sha256: 0212c7f605e588658ab594853b40c531865150d9dabf4c64baeb78e253ee6417

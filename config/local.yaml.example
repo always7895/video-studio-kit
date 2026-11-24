@@ -1,0 +1,14 @@
+# Copy to config/local.yaml (gitignored). Placeholders only; each value can also
+# come from an env var: dotted key "tools.ffmpeg" -> VSK_TOOLS_FFMPEG.
+schema_version: 1
+paths:
+  comfyui_root: "<absolute-path-to-your-ComfyUI-checkout>"
+  models_root: "<absolute-path-to-your-models-directory>"
+projects:
+  ad: "<absolute-project-root>"
+  explainer: "<absolute-project-root>"
+  documentary: "<absolute-project-root>"
+tools:
+  ffmpeg: "<absolute-path-to-ffmpeg-or-leave-for-PATH>"
+services:
+  comfyui_url: "http://127.0.0.1:8188"

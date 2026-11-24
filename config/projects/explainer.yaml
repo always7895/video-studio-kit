@@ -1,0 +1,22 @@
+schema_version: 1
+id: explainer
+name: Example economics-explainer project
+root_key: explainer
+# Project roots are defined only in the gitignored config/local.yaml (or env).
+paths:
+  character_masters: "<relative-characters-directory>"
+  reference_images: "<relative-reference-directory>"
+  output: "<relative-output-directory>"
+qa:
+  profile: standard
+  face_cosine_min: null
+  disposition: HOLD
+steps:
+  - name: backdrop
+    recipe: moss
+    overrides:
+      prompt: "Abstract financial district skyline at dusk, no text, no logos, wide empty sky"
+      width: 1344
+      height: 768
+      seed: 201
+      filename_prefix: vsk/explainer/backdrop

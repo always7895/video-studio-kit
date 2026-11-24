@@ -1,0 +1,78 @@
+name: ci
+
+# Checkout uses plain git with the workflow token, so the workflow depends on no
+# third-party actions. The runners ship git and a Python 3.12 or newer.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          git init -q .
+          git remote add origin "${{ github.server_url }}/${{ github.repository }}"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "${{ github.sha }}"
+          git checkout -q FETCH_HEAD
+      - name: Install core only
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+      - name: Core CPU tests (QA tests skip without extras)
+        run: python -m pytest -q
+      - name: Offline doctor and graph build
+        run: |
+          python -m vsk doctor
+          python -m vsk build ad
+          python -m vsk build explainer
+          python -m vsk build documentary
+      - name: QA tests with numpy and opencv
+        run: |
+          python -m pip install numpy opencv-python-headless
+          python -m pytest -q tests/test_qa.py
+
+  comfyui-smoke:
+    needs: cpu-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          git init -q .
+          git remote add origin "${{ github.server_url }}/${{ github.repository }}"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "${{ github.sha }}"
+          git checkout -q FETCH_HEAD
+      - name: Install kit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+      - name: Install pinned ComfyUI and public nodes
+        run: python setup/install_comfyui.py --dest "$RUNNER_TEMP/ComfyUI"
+      - name: ComfyUI dependencies (CPU torch)
+        run: |
+          python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r "$RUNNER_TEMP/ComfyUI/requirements.txt"
+          for req in "$RUNNER_TEMP"/ComfyUI/custom_nodes/*/requirements.txt; do
+            python -m pip install -r "$req" || echo "optional node requirements failed: $req"
+          done
+      - name: ComfyUI CPU smoke test
+        working-directory: ${{ runner.temp }}/ComfyUI
+        run: python main.py --cpu --quick-test-for-ci
+      - name: Model manifest dry run (HEAD only, no download)
+        run: python setup/download_models.py --dry-run

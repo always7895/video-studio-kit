@@ -1,0 +1,15 @@
+schema_version: 1
+# Every automated check is advisory. Nothing here approves a deliverable;
+# a human reviewer signs off. Default disposition is HOLD.
+default_disposition: HOLD
+profiles:
+  standard:
+    face:
+      arcface_frontal_cosine_min: 0.65
+    flow:
+      background_mean_px_max: 1.5
+    dup:
+      half_rate_alt_ratio_below: 0.3
+    review:
+      checks_are_advisory: true
+      automatic_approval: false
