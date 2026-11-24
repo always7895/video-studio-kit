@@ -1,7 +1,5 @@
 name: ci
 
-# Checkout uses plain git with the workflow token, so the workflow depends on no
-# third-party actions. The runners ship git and a Python 3.12 or newer.
 on:
   push:
   pull_request:
@@ -17,16 +15,10 @@ jobs:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
-          git init -q .
-          git remote add origin "${{ github.server_url }}/${{ github.repository }}"
-          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "${{ github.sha }}"
-          git checkout -q FETCH_HEAD
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: Install core only
         run: |
           python -m pip install --upgrade pip
@@ -48,16 +40,10 @@ jobs:
     needs: cpu-tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
-          git init -q .
-          git remote add origin "${{ github.server_url }}/${{ github.repository }}"
-          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth 1 origin "${{ github.sha }}"
-          git checkout -q FETCH_HEAD
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: Install kit
         run: |
           python -m pip install --upgrade pip
